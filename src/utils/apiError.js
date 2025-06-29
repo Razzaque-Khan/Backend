@@ -16,7 +16,6 @@ class ApiError extends Error {
       this.stack = stack;
     } else {
       Error.captureStackTrace(this, this.constructor);
-      console.log("Else part running...")
     }
   }
 }

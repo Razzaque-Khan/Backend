@@ -16,7 +16,6 @@ const registerUser = asyncHandler(async (req, res) => {
   // return res
 
   const { username, email, fullName, password } = req.body;
-  console.log(username, email, fullName, password);
 
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -27,11 +26,14 @@ const registerUser = asyncHandler(async (req, res) => {
     $or: [{ username }, { email }],
   });
 
+  req.files.hasOwnProperty = Object.prototype.hasOwnProperty; //// Injection of Object.prototype.hasOwnProperty in req.files to chect if it has a specific property?
+
   if (existedUser)
     throw new ApiError(409, "User with email or username already exists");
-
-  const avatarLacalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  const avatarLacalPath =
+    req.files.hasOwnProperty("avatar") && req.files?.avatar[0]?.path;
+  const coverImageLocalPath =
+    req.files.hasOwnProperty("coverImage") && req.files?.coverImage[0]?.path;
 
   if (!avatarLacalPath) throw new ApiError(400, "Avatar file is required");
   const avatar = await uploadOnCloudinary(avatarLacalPath);
@@ -54,7 +56,8 @@ const registerUser = asyncHandler(async (req, res) => {
   if (!createdUser)
     throw new ApiError(500, "Something went wrong while registering the user");
 
-  res.status(201)
+  res
+    .status(201)
     .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
