@@ -195,4 +195,118 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+//^ OK, Working Properly
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  if (newPassword !== confirmPassword)
+    throw new ApiError(401, "newPassword and confirmPassword must be same");
+
+  if (!currentPassword || !newPassword || !confirmPassword)
+    throw new ApiError(400, "All fields are required");
+
+  const user = await User.findById(req.user._id);
+
+  const isPasswordValid = await user.isPasswordCorrect(currentPassword);
+
+  if (!isPasswordValid) throw new ApiError(400, "Incorrect current password");
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+//^ OK, Working Properly
+const getCurrentUser = asyncHandler(async (req, res) => {
+  console.log(req.user)
+  res.status(200).json(new ApiResponse(200, req.user, "current user fetched"));
+});
+
+//^ OK, Working Properly
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+
+  if (!fullName && !email) throw new ApiError(400, "All fiels are required");
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        fullName,
+        email,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, user, "User details updated successfully"));
+});
+
+//^ OK, Working Properly
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  req.files.hasOwnProperty = Object.prototype.hasOwnProperty; //// Injection of Object.prototype.hasOwnProperty in req.files to chect if it has a specific property?
+  const avatarLocalPath = req.files.hasOwnProperty("avatar") && req.files?.avatar[0]?.path;
+
+  if (!avatarLocalPath) throw new ApiError(400, "Avatar file missing");
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  if (!avatar.url) throw new ApiError(400, "Error white uploading");
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        avatar: avatar.url
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  res.status(200).json(new ApiResponse(200, user, "avatar updated successfully"));
+});
+
+//^ OK, Working Properly
+const updateUserCoverImage = asyncHandler(async (req, res, next) => {
+  req.files.hasOwnProperty = Object.prototype.hasOwnProperty; //// Injection of Object.prototype.hasOwnProperty in req.files to chect if it has a specific property?
+  const coverImageLocalPath = req.files.hasOwnProperty("coverImage") && req.files?.coverImage[0]?.path;
+
+  if (!coverImageLocalPath) throw new ApiError(400, "coverImage file missing");
+
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  if (!coverImage.url) throw new ApiError(400, "Error white uploading");
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        coverImage: coverImage.url
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  res.status(200).json(new ApiResponse(200, user, "coverImage updated successfully"));
+});
+
+
+
+
+
+
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage
+};
