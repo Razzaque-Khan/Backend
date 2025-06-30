@@ -22,6 +22,7 @@ const generateAccessAndrefreshTokens = async (userId) => {
   }
 };
 
+//^ OK, Working Properly
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
   // validation - not empty
@@ -79,6 +80,7 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
+//^ OK, Working Properly
 const loginUser = asyncHandler(async (req, res) => {
   // req body -> data
   // username or email
@@ -130,6 +132,7 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
+//^ OK, Working Properly
 const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(req.user._id, {
     $set: {
@@ -149,8 +152,9 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User logged out"));
 });
 
+//^ OK, Working Properly
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incommingToken = req.cookies.refreshToken || req.body.refreshToken;
+  const incommingToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!incommingToken) {
     throw new ApiError(401, "unauthorized request");
@@ -161,7 +165,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     process.env.REFRESH_TOKEN_SECRET
   );
 
-  const user = User.findById(decodedToken._id);
+  const user = await User.findById(decodedToken._id);
 
   if (!user) throw new ApiError(401, "Invalid refrsh token");
 
@@ -171,7 +175,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: true,
   };
-  const { accessToken, refreshToken } = generateAccessAndrefreshTokens(
+  const { accessToken, refreshToken } = await generateAccessAndrefreshTokens(
     user._id
   );
 
