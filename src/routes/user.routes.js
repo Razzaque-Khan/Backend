@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   changeCurrentPassword,
+  deleteUser,
   getCurrentUser,
   loginUser,
   logoutUser,
@@ -30,6 +31,7 @@ router.route("/register").post(
 );
 
 router.route("/login").post(loginUser);
+router.route("/delete-user").delete(verifyJWT, deleteUser)
 router.route("/").get(verifyJWT, getCurrentUser);
 
 // secured routes

@@ -134,11 +134,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
 //^ OK, Working Properly
 const logoutUser = asyncHandler(async (req, res) => {
-  await User.findByIdAndUpdate(req.user._id, {
-    $set: {
-      refreshToken: undefined,
-    },
-  });
+  const user = await User.findById(req.user._id);
+  user.refreshToken = null;
+  user.save({ validateBeforeSave: false });
 
   const options = {
     httpOnly: true,
@@ -221,7 +219,6 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 //^ OK, Working Properly
 const getCurrentUser = asyncHandler(async (req, res) => {
-  console.log(req.user)
   res.status(200).json(new ApiResponse(200, req.user, "current user fetched"));
 });
 
@@ -271,7 +268,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 });
 
 //^ OK, Working Properly
-const updateUserCoverImage = asyncHandler(async (req, res, next) => {
+const updateUserCoverImage = asyncHandler(async (req, res) => {
   req.files.hasOwnProperty = Object.prototype.hasOwnProperty; //// Injection of Object.prototype.hasOwnProperty in req.files to chect if it has a specific property?
   const coverImageLocalPath = req.files.hasOwnProperty("coverImage") && req.files?.coverImage[0]?.path;
 
@@ -293,6 +290,14 @@ const updateUserCoverImage = asyncHandler(async (req, res, next) => {
   res.status(200).json(new ApiResponse(200, user, "coverImage updated successfully"));
 });
 
+//^ OK, Working Properly
+const deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id).select("-password -refreshToken");
+  if (!user) throw new ApiError(400, "Unothrized Request");
+  await User.deleteOne({ _id: req.user?._id });
+  res.status(200).json(new ApiResponse(200, user, "User deleted successfully"));
+})
+
 
 
 
@@ -308,5 +313,6 @@ export {
   getCurrentUser,
   updateAccountDetails,
   updateUserAvatar,
-  updateUserCoverImage
+  updateUserCoverImage,
+  deleteUser
 };
